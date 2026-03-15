@@ -2,87 +2,205 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Roblox Dashboard</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Military Dashboard | USM</title>
     <style>
-        :root { --bg: #0b0e14; --side: #151921; --accent: #3a86ff; --text: #ffffff; }
-        .light-mode { --bg: #f0f2f5; --side: #ffffff; --accent: #3a86ff; --text: #1c1e21; }
-
-        body { margin: 0; font-family: 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); transition: 0.3s; }
-        .container { display: flex; height: 100vh; }
-
-        /* Animated Sidebar */
-        .sidebar { 
-            width: 250px; background: var(--side); padding: 20px; 
-            border-right: 1px solid rgba(255,255,255,0.1);
-            animation: slideIn 0.6s ease;
+        :root {
+            --primary: #3a86ff;
+            --bg: #0b0c10;
+            --card: #1f2833;
+            --text: #ffffff;
+            --border: rgba(255, 255, 255, 0.1);
         }
-        @keyframes slideIn { from { transform: translateX(-100%); } to { transform: translateX(0); } }
 
-        .nav-item { 
-            padding: 12px 15px; margin: 8px 0; border-radius: 8px; cursor: pointer; 
-            transition: 0.2s; font-weight: 500; display: flex; align-items: center;
+        body { margin: 0; font-family: 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); overflow: hidden; }
+
+        /* --- AUTH & GATEKEEPER SCREENS --- */
+        .overlay {
+            position: fixed; inset: 0; background: var(--bg);
+            display: flex; align-items: center; justify-content: center; z-index: 2000;
+            transition: 0.5s;
         }
-        .nav-item:hover { background: var(--accent); transform: translateX(5px); color: white; }
-        .hidden { display: none; }
 
-        .main { flex: 1; padding: 40px; overflow-y: auto; }
-        .card { background: var(--side); padding: 20px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.2); }
+        .auth-card {
+            background: var(--card); padding: 30px; border-radius: 15px;
+            width: 320px; text-align: center; border: 1px solid var(--border);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5); animation: fadeIn 0.5s;
+        }
+
+        input, select {
+            width: 90%; padding: 12px; margin: 8px 0;
+            background: #0b0c10; border: 1px solid var(--border);
+            color: white; border-radius: 5px;
+        }
+
+        button {
+            background: var(--primary); color: white; border: none;
+            padding: 12px; border-radius: 5px; cursor: pointer;
+            width: 100%; font-weight: bold; margin-top: 10px; transition: 0.3s;
+        }
+
+        button:hover { filter: brightness(1.2); transform: scale(1.02); }
+
+        /* --- DASHBOARD --- */
+        #main-dash { display: none; height: 100vh; }
         
-        button { padding: 10px 20px; border: none; border-radius: 6px; cursor: pointer; background: var(--accent); color: white; }
+        .sidebar {
+            width: 260px; background: #151921; padding: 20px;
+            border-right: 1px solid var(--border); display: flex; flex-direction: column;
+        }
+
+        .nav-item {
+            padding: 15px; margin: 5px 0; border-radius: 8px;
+            cursor: pointer; transition: 0.3s; display: flex; align-items: center; gap: 10px;
+        }
+
+        .nav-item:hover, .nav-item.active { background: var(--primary); }
+
+        .content-area { flex: 1; padding: 40px; overflow-y: auto; }
+        .tab-content { display: none; animation: slideUp 0.4s ease-out; }
+        .tab-content.active { display: block; }
+
+        .hidden { display: none !important; }
+
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        @keyframes slideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
     </style>
 </head>
 <body>
 
-<div class="container">
-    <div class="sidebar">
-        <h3>Admin Panel</h3>
-        <div class="nav-item">💬 Chat</div>
-        <div class="nav-item" id="mod-tab" class="hidden">🛡️ Moderation</div>
-        <div class="nav-item" id="game-mod-tab" class="hidden">🎮 Game Mod</div>
-        <div class="nav-item" id="config-tab" class="hidden">🛠️ Configure</div>
-        <div class="nav-item" onclick="toggleTheme()">🌓 Settings</div>
-    </div>
-
-    <div class="main">
-        <div class="card">
-            <h1>Welcome, <span id="user-display">Guest</span></h1>
-            <p>Rank: <b id="rank-display">Loading...</b></p>
-            <div id="status-box">Please log in to manage the game.</div>
+    <div id="auth-screen" class="overlay">
+        <div class="auth-card" id="auth-box">
+            <h2 id="auth-title">USM Login</h2>
+            <input type="text" id="username" placeholder="Username">
+            <input type="password" id="password" placeholder="Password">
+            <button onclick="processAuth()" id="auth-btn">Login</button>
+            <p style="font-size: 12px; opacity: 0.6; cursor: pointer; margin-top:15px;" onclick="toggleAuthMode()" id="toggle-text">Don't have an account? Sign Up</p>
         </div>
     </div>
-</div>
 
-<script>
-    // THE RANK SYSTEM (Logic)
-    const Ranks = {
-        PLAYER: 1,
-        MODERATOR: 2,
-        DEVELOPER: 3,
-        CO_OWNER: 4,
-        FOUNDER: 5
-    };
+    <div id="gatekeeper" class="overlay" style="display: none; flex-direction: column; text-align: center;">
+        <h1 style="font-size: 40px;">Welcome, <span id="gk-user" style="color:var(--primary)"></span></h1>
+        <h3 id="gk-rank" style="opacity: 0.7;">Rank: Player</h3>
+        <button onclick="showDashboard()" style="width: 250px; margin-top: 20px;">ACCESS DASHBOARD</button>
+    </div>
 
-    let userRank = "Developer"; // This will eventually come from your database
+    <div id="main-dash">
+        <div class="sidebar">
+            <h2 style="color: var(--primary); letter-spacing: 2px;">USM PANEL</h2>
+            <div class="nav-item active" onclick="switchTab('home', this)">🏠 Home</div>
+            <div class="nav-item" onclick="switchTab('chat', this)">💬 Global Chat</div>
+            <div id="nav-mod" class="nav-item hidden" onclick="switchTab('mod', this)">🛡️ Moderation</div>
+            <div id="nav-game" class="nav-item hidden" onclick="switchTab('game', this)">🎮 Game Mod</div>
+            <div id="nav-conf" class="nav-item hidden" onclick="switchTab('conf', this)">🛠️ Configure</div>
+            
+            <div style="margin-top: auto;">
+                <div class="nav-item" onclick="toggleTheme()">🌓 Toggle Theme</div>
+                <div class="nav-item" onclick="location.reload()" style="color: #ff4d4d;">🚪 Logout</div>
+            </div>
+        </div>
 
-    function applyPermissions(rank) {
-        document.getElementById('rank-display').innerText = rank;
-        document.getElementById('user-display').innerText = "AdminUser";
-        
-        const rankLevel = Ranks[rank.toUpperCase()] || 0;
+        <div class="content-area">
+            <div id="home" class="tab-content active">
+                <h1>Command Center</h1>
+                <div style="background: var(--card); padding: 20px; border-radius: 10px; border: 1px solid var(--border);">
+                    <h3>System Status: <span style="color: #00ff00;">Online</span></h3>
+                    <p>Welcome to the United States Military integrated dashboard. Use the sidebar to navigate.</p>
+                </div>
+            </div>
 
-        if (rankLevel >= Ranks.MODERATOR) {
-            document.getElementById('mod-tab').classList.remove('hidden');
-            document.getElementById('game-mod-tab').classList.remove('hidden');
+            <div id="chat" class="tab-content">
+                <h1>Global Chat</h1>
+                <div style="height: 400px; background: rgba(0,0,0,0.5); border-radius: 10px; padding: 20px; border: 1px solid var(--border);">
+                    <p><b style="color:var(--primary)">[SYSTEM]:</b> Encrypted channel established.</p>
+                </div>
+            </div>
+
+            <div id="mod" class="tab-content">
+                <h1>Moderation Panel</h1>
+                <p>Manage community behavior and players.</p>
+                <button style="background:#ff4d4d; width:200px;">Ban Player</button>
+                <button style="background:#ffa500; width:200px;">Mute Player</button>
+            </div>
+
+            <div id="game" class="tab-content">
+                <h1>Game Moderation</h1>
+                <p>Direct connection to Roblox DataStore.</p>
+                <button onclick="alert('Shutdown command sent.')">Shutdown All Servers</button>
+            </div>
+
+            <div id="conf" class="tab-content">
+                <h1>Configuration</h1>
+                <h3>Promotion Center</h3>
+                <input type="text" placeholder="Username to promote...">
+                <select>
+                    <option>Moderator</option>
+                    <option>Developer</option>
+                    <option>Co-Owner</option>
+                </select>
+                <button>Update Permissions</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let isSignUp = false;
+        let loggedUser = "";
+        let loggedRank = "Player";
+
+        function toggleAuthMode() {
+            isSignUp = !isSignUp;
+            document.getElementById('auth-title').innerText = isSignUp ? "USM Sign Up" : "USM Login";
+            document.getElementById('auth-btn').innerText = isSignUp ? "Create Account" : "Login";
+            document.getElementById('toggle-text').innerText = isSignUp ? "Already have an account? Login" : "Don't have an account? Sign Up";
         }
-        if (rankLevel >= Ranks.DEVELOPER) {
-            document.getElementById('config-tab').classList.remove('hidden');
+
+        function processAuth() {
+            const user = document.getElementById('username').value;
+            if (!user) return alert("Please enter a username.");
+
+            loggedUser = user;
+            
+            // LOGIC: Check if user is the big boss
+            if (user.toLowerCase() === "founder" || user.toLowerCase() === "owner") {
+                loggedRank = "Founder";
+            } else {
+                loggedRank = "Player";
+            }
+
+            // Hide Auth, Show Gatekeeper
+            document.getElementById('auth-screen').style.display = 'none';
+            document.getElementById('gatekeeper').style.display = 'flex';
+            document.getElementById('gk-user').innerText = loggedUser;
+            document.getElementById('gk-rank').innerText = "Rank: " + loggedRank;
         }
-    }
 
-    function toggleTheme() { document.body.classList.toggle('light-mode'); }
+        function showDashboard() {
+            document.getElementById('gatekeeper').style.display = 'none';
+            document.getElementById('main-dash').style.display = 'flex';
 
-    // Start with permissions applied
-    applyPermissions(userRank);
-</script>
+            // Show tabs based on rank
+            const level = loggedRank;
+            if (level === "Founder" || level === "Developer") {
+                document.getElementById('nav-mod').classList.remove('hidden');
+                document.getElementById('nav-game').classList.remove('hidden');
+                document.getElementById('nav-conf').classList.remove('hidden');
+            }
+        }
+
+        function switchTab(tabId, el) {
+            // Remove active classes
+            document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
+            document.querySelectorAll('.nav-item').forEach(nav => nav.classList.remove('active'));
+            
+            // Set new active
+            document.getElementById(tabId).classList.add('active');
+            el.classList.add('active');
+        }
+
+        function toggleTheme() {
+            alert("Theme settings saved to local storage.");
+        }
+    </script>
 </body>
 </html>
