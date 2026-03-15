@@ -3,203 +3,230 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Military Dashboard | USM</title>
+    <title>USM Military Dashboard</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
-        :root {
-            --primary: #3a86ff;
-            --bg: #0b0c10;
-            --card: #1f2833;
-            --text: #ffffff;
-            --border: rgba(255, 255, 255, 0.1);
-        }
-
+        :root { --primary: #3a86ff; --bg: #0b0c10; --card: #1f2833; --text: #ffffff; --border: rgba(255,255,255,0.1); }
         body { margin: 0; font-family: 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); overflow: hidden; }
-
-        /* --- AUTH & GATEKEEPER SCREENS --- */
-        .overlay {
-            position: fixed; inset: 0; background: var(--bg);
-            display: flex; align-items: center; justify-content: center; z-index: 2000;
-            transition: 0.5s;
-        }
-
-        .auth-card {
-            background: var(--card); padding: 30px; border-radius: 15px;
-            width: 320px; text-align: center; border: 1px solid var(--border);
-            box-shadow: 0 10px 30px rgba(0,0,0,0.5); animation: fadeIn 0.5s;
-        }
-
-        input, select {
-            width: 90%; padding: 12px; margin: 8px 0;
-            background: #0b0c10; border: 1px solid var(--border);
-            color: white; border-radius: 5px;
-        }
-
-        button {
-            background: var(--primary); color: white; border: none;
-            padding: 12px; border-radius: 5px; cursor: pointer;
-            width: 100%; font-weight: bold; margin-top: 10px; transition: 0.3s;
-        }
-
-        button:hover { filter: brightness(1.2); transform: scale(1.02); }
-
-        /* --- DASHBOARD --- */
-        #main-dash { display: none; height: 100vh; }
         
-        .sidebar {
-            width: 260px; background: #151921; padding: 20px;
-            border-right: 1px solid var(--border); display: flex; flex-direction: column;
+        /* Smooth Animations */
+        @keyframes welcomeScale { 
+            0% { opacity: 0; transform: scale(0.7) translateY(30px); filter: blur(10px); } 
+            100% { opacity: 1; transform: scale(1) translateY(0); filter: blur(0); } 
         }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
 
-        .nav-item {
-            padding: 15px; margin: 5px 0; border-radius: 8px;
-            cursor: pointer; transition: 0.3s; display: flex; align-items: center; gap: 10px;
-        }
+        .overlay { position: fixed; inset: 0; background: var(--bg); display: flex; align-items: center; justify-content: center; z-index: 2000; }
+        .auth-card { background: var(--card); padding: 30px; border-radius: 15px; width: 320px; text-align: center; border: 1px solid var(--border); box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
+        
+        input, select, textarea { width: 90%; padding: 12px; margin: 8px 0; background: #000; border: 1px solid var(--border); color: white; border-radius: 8px; outline: none; }
+        button { background: var(--primary); color: white; border: none; padding: 12px; border-radius: 8px; cursor: pointer; width: 100%; font-weight: bold; transition: 0.3s; margin-top: 10px; }
+        button:hover { filter: brightness(1.2); transform: translateY(-2px); box-shadow: 0 5px 15px rgba(58, 134, 255, 0.4); }
 
-        .nav-item:hover, .nav-item.active { background: var(--primary); }
+        /* Dashboard Layout */
+        #main-dash { display: none; height: 100vh; }
+        .sidebar { width: 260px; background: #151921; padding: 20px; border-right: 1px solid var(--border); display: flex; flex-direction: column; }
+        .nav-item { padding: 15px; margin: 5px 0; border-radius: 10px; cursor: pointer; transition: 0.3s; display: flex; align-items: center; gap: 10px; opacity: 0.7; }
+        .nav-item:hover, .nav-item.active { background: var(--primary); opacity: 1; }
 
-        .content-area { flex: 1; padding: 40px; overflow-y: auto; }
-        .tab-content { display: none; animation: slideUp 0.4s ease-out; }
+        .content-area { flex: 1; padding: 40px; overflow-y: auto; background: radial-gradient(circle at top right, #1a1a2e, #0b0c10); }
+        .tab-content { display: none; animation: fadeIn 0.5s ease; }
         .tab-content.active { display: block; }
 
+        /* Chat UI */
+        #chat-box { height: 320px; background: rgba(0,0,0,0.4); border-radius: 12px; padding: 20px; overflow-y: auto; border: 1px solid var(--border); margin-bottom: 15px; }
+        .msg { background: rgba(255,255,255,0.03); padding: 10px; border-radius: 8px; margin-bottom: 8px; border-left: 3px solid var(--primary); animation: fadeIn 0.3s ease; }
+        
         .hidden { display: none !important; }
-
-        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
-        @keyframes slideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+        .welcome-text { animation: welcomeScale 0.8s cubic-bezier(0.34, 1.56, 0.64, 1); text-align: center; }
     </style>
 </head>
 <body>
 
     <div id="auth-screen" class="overlay">
-        <div class="auth-card" id="auth-box">
-            <h2 id="auth-title">USM Login</h2>
-            <input type="text" id="username" placeholder="Username">
+        <div class="auth-card">
+            <h2 id="auth-title">USM Military Login</h2>
+            <input type="email" id="email" placeholder="Email Address">
             <input type="password" id="password" placeholder="Password">
-            <button onclick="processAuth()" id="auth-btn">Login</button>
-            <p style="font-size: 12px; opacity: 0.6; cursor: pointer; margin-top:15px;" onclick="toggleAuthMode()" id="toggle-text">Don't have an account? Sign Up</p>
+            <button onclick="handleAuth()" id="auth-btn">Authorize Access</button>
+            <p style="font-size: 12px; cursor: pointer; margin-top:15px; opacity: 0.6;" onclick="toggleAuth()">New Recruit? Create Account</p>
         </div>
     </div>
 
-    <div id="gatekeeper" class="overlay" style="display: none; flex-direction: column; text-align: center;">
-        <h1 style="font-size: 40px;">Welcome, <span id="gk-user" style="color:var(--primary)"></span></h1>
-        <h3 id="gk-rank" style="opacity: 0.7;">Rank: Player</h3>
-        <button onclick="showDashboard()" style="width: 250px; margin-top: 20px;">ACCESS DASHBOARD</button>
+    <div id="gatekeeper" class="overlay" style="display: none; flex-direction: column;">
+        <div class="welcome-text">
+            <h1 style="font-size: 55px; margin-bottom: 0; letter-spacing: -1px;">Welcome, <span id="gk-user" style="color:var(--primary)"></span></h1>
+            <h2 id="gk-rank" style="opacity: 0.5; font-weight: 400; margin-top: 5px; text-transform: uppercase; letter-spacing: 2px;">Rank: Player</h2>
+            <button onclick="enterDash()" style="width: 250px; margin-top: 40px; height: 50px; font-size: 16px;">ENTER COMMAND</button>
+        </div>
     </div>
 
     <div id="main-dash">
         <div class="sidebar">
-            <h2 style="color: var(--primary); letter-spacing: 2px;">USM PANEL</h2>
-            <div class="nav-item active" onclick="switchTab('home', this)">🏠 Home</div>
-            <div class="nav-item" onclick="switchTab('chat', this)">💬 Global Chat</div>
-            <div id="nav-mod" class="nav-item hidden" onclick="switchTab('mod', this)">🛡️ Moderation</div>
-            <div id="nav-game" class="nav-item hidden" onclick="switchTab('game', this)">🎮 Game Mod</div>
-            <div id="nav-conf" class="nav-item hidden" onclick="switchTab('conf', this)">🛠️ Configure</div>
-            
-            <div style="margin-top: auto;">
-                <div class="nav-item" onclick="toggleTheme()">🌓 Toggle Theme</div>
-                <div class="nav-item" onclick="location.reload()" style="color: #ff4d4d;">🚪 Logout</div>
-            </div>
+            <h2 style="color: var(--primary); font-size: 18px; margin-bottom: 30px;">UNITED STATES MILITARY</h2>
+            <div class="nav-item active" onclick="switchTab('home', this)">🏠 Headquarters</div>
+            <div class="nav-item" onclick="switchTab('chat', this)">💬 Global Comms</div>
+            <div class="nav-item" onclick="switchTab('rules', this)">📜 Protocols</div>
+            <div id="nav-ann" class="nav-item hidden" onclick="switchTab('ann-tab', this)">📢 News Update</div>
+            <div id="nav-conf" class="nav-item hidden" onclick="switchTab('conf-tab', this)">🛠️ Personnel</div>
+            <button onclick="location.reload()" style="margin-top:auto; background:#cc3333; height: 45px;">Terminated Session</button>
         </div>
 
         <div class="content-area">
             <div id="home" class="tab-content active">
                 <h1>Command Center</h1>
-                <div style="background: var(--card); padding: 20px; border-radius: 10px; border: 1px solid var(--border);">
-                    <h3>System Status: <span style="color: #00ff00;">Online</span></h3>
-                    <p>Welcome to the United States Military integrated dashboard. Use the sidebar to navigate.</p>
+                <div style="background:var(--card); padding:25px; border-radius:15px; border: 1px solid var(--border); box-shadow: 0 4px 20px rgba(0,0,0,0.3);">
+                    <h3 style="margin-top:0; color:var(--primary)">📢 Latest Briefing</h3>
+                    <p id="ann-display" style="line-height: 1.6;">Awaiting new intelligence reports...</p>
                 </div>
             </div>
 
             <div id="chat" class="tab-content">
-                <h1>Global Chat</h1>
-                <div style="height: 400px; background: rgba(0,0,0,0.5); border-radius: 10px; padding: 20px; border: 1px solid var(--border);">
-                    <p><b style="color:var(--primary)">[SYSTEM]:</b> Encrypted channel established.</p>
+                <h1>Secure Comms</h1>
+                <div id="chat-box"></div>
+                <div style="display:flex; gap:12px;">
+                    <input type="text" id="chat-input" placeholder="Transmit message...">
+                    <button onclick="sendMsg()" style="width:110px; margin-top:8px;">Send</button>
                 </div>
             </div>
 
-            <div id="mod" class="tab-content">
-                <h1>Moderation Panel</h1>
-                <p>Manage community behavior and players.</p>
-                <button style="background:#ff4d4d; width:200px;">Ban Player</button>
-                <button style="background:#ffa500; width:200px;">Mute Player</button>
+            <div id="rules" class="tab-content">
+                <h1>Rules of Engagement</h1>
+                <div id="rules-display" style="background:var(--card); padding:25px; border-radius:15px; white-space: pre-wrap; line-height: 1.8;">Loading protocols...</div>
+                <div id="rules-admin" class="hidden" style="margin-top:20px;">
+                    <textarea id="rules-input" rows="5" placeholder="Update protocols..."></textarea>
+                    <button onclick="updateSettings('rules', 'rules-input', 'rules-display')">Sync Protocols</button>
+                </div>
             </div>
 
-            <div id="game" class="tab-content">
-                <h1>Game Moderation</h1>
-                <p>Direct connection to Roblox DataStore.</p>
-                <button onclick="alert('Shutdown command sent.')">Shutdown All Servers</button>
+            <div id="ann-tab" class="tab-content">
+                <h1>Intelligence Broadcast</h1>
+                <textarea id="ann-input" style="height: 100px;" placeholder="Enter news for all units..."></textarea>
+                <button onclick="updateSettings('announcement', 'ann-input', 'ann-display')">Broadcast News</button>
             </div>
 
-            <div id="conf" class="tab-content">
-                <h1>Configuration</h1>
-                <h3>Promotion Center</h3>
-                <input type="text" placeholder="Username to promote...">
-                <select>
-                    <option>Moderator</option>
-                    <option>Developer</option>
-                    <option>Co-Owner</option>
+            <div id="conf-tab" class="tab-content">
+                <h1>Personnel Promotion</h1>
+                <p style="opacity:0.7">Paste the User UUID from Supabase Auth to modify rank.</p>
+                <input type="text" id="target-id" placeholder="User UUID">
+                <select id="target-rank">
+                    <option value="Player">Player</option>
+                    <option value="Moderator">Moderator</option>
+                    <option value="Developer">Developer</option>
+                    <option value="Founder">Founder</option>
                 </select>
-                <button>Update Permissions</button>
+                <button onclick="promoteUser()">Execute Promotion</button>
             </div>
         </div>
     </div>
 
     <script>
-        let isSignUp = false;
-        let loggedUser = "";
-        let loggedRank = "Player";
+        // PASTE YOUR SUPABASE INFO HERE
+        const _url = 'YOUR_SUPABASE_URL';
+        const _key = 'YOUR_SUPABASE_KEY';
+        const supabaseClient = supabase.createClient(_url, _key);
 
-        function toggleAuthMode() {
+        let isSignUp = false;
+        let myProfile = null;
+
+        function toggleAuth() {
             isSignUp = !isSignUp;
-            document.getElementById('auth-title').innerText = isSignUp ? "USM Sign Up" : "USM Login";
-            document.getElementById('auth-btn').innerText = isSignUp ? "Create Account" : "Login";
-            document.getElementById('toggle-text').innerText = isSignUp ? "Already have an account? Login" : "Don't have an account? Sign Up";
+            document.getElementById('auth-title').innerText = isSignUp ? "Create Recruit File" : "USM Military Login";
+            document.getElementById('auth-btn').innerText = isSignUp ? "Join Military" : "Authorize Access";
         }
 
-        function processAuth() {
-            const user = document.getElementById('username').value;
-            if (!user) return alert("Please enter a username.");
+        async function handleAuth() {
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+            if(!email || !password) return alert("Credentials required.");
 
-            loggedUser = user;
-            
-            // LOGIC: Check if user is the big boss
-            if (user.toLowerCase() === "founder" || user.toLowerCase() === "owner") {
-                loggedRank = "Founder";
+            if (isSignUp) {
+                const { data, error } = await supabaseClient.auth.signUp({ email, password });
+                if (error) return alert(error.message);
+                await supabaseClient.from('profiles').insert([{ id: data.user.id, email: email, rank: 'Player' }]);
+                alert("Recruit File Created. Please log in.");
+                location.reload();
             } else {
-                loggedRank = "Player";
+                const { data, error } = await supabaseClient.auth.signInWithPassword({ email, password });
+                if (error) return alert(error.message);
+                fetchProfile(data.user);
             }
+        }
 
-            // Hide Auth, Show Gatekeeper
+        async function fetchProfile(user) {
+            const { data } = await supabaseClient.from('profiles').select('*').eq('id', user.id).single();
+            myProfile = data;
             document.getElementById('auth-screen').style.display = 'none';
             document.getElementById('gatekeeper').style.display = 'flex';
-            document.getElementById('gk-user').innerText = loggedUser;
-            document.getElementById('gk-rank').innerText = "Rank: " + loggedRank;
+            document.getElementById('gk-user').innerText = user.email.split('@')[0];
+            document.getElementById('gk-rank').innerText = "Rank: " + (data.rank || "Player");
         }
 
-        function showDashboard() {
+        function enterDash() {
             document.getElementById('gatekeeper').style.display = 'none';
             document.getElementById('main-dash').style.display = 'flex';
-
-            // Show tabs based on rank
-            const level = loggedRank;
-            if (level === "Founder" || level === "Developer") {
-                document.getElementById('nav-mod').classList.remove('hidden');
-                document.getElementById('nav-game').classList.remove('hidden');
-                document.getElementById('nav-conf').classList.remove('hidden');
-            }
-        }
-
-        function switchTab(tabId, el) {
-            // Remove active classes
-            document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
-            document.querySelectorAll('.nav-item').forEach(nav => nav.classList.remove('active'));
             
-            // Set new active
-            document.getElementById(tabId).classList.add('active');
-            el.classList.add('active');
+            const r = myProfile.rank;
+            if (r === "Founder" || r === "Developer") {
+                document.getElementById('nav-conf').classList.remove('hidden');
+                document.getElementById('nav-ann').classList.remove('hidden');
+                document.getElementById('rules-admin').classList.remove('hidden');
+            }
+            loadGlobalData();
+            initRealtime();
         }
 
-        function toggleTheme() {
-            alert("Theme settings saved to local storage.");
+        async function loadGlobalData() {
+            const { data } = await supabaseClient.from('settings').select('*');
+            if(data) data.forEach(s => {
+                if(s.name === 'rules') document.getElementById('rules-display').innerText = s.value;
+                if(s.name === 'announcement') document.getElementById('ann-display').innerText = s.value;
+            });
+        }
+
+        async function updateSettings(name, inputId, displayId) {
+            const val = document.getElementById(inputId).value;
+            await supabaseClient.from('settings').upsert({ name: name, value: val });
+            document.getElementById(displayId).innerText = val;
+            alert("Intelligence Synced.");
+        }
+
+        function initRealtime() {
+            supabaseClient.channel('public:messages')
+            .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'messages' }, p => addMsg(p.new))
+            .subscribe();
+            
+            supabaseClient.from('messages').select('*').order('created_at', {ascending: true}).then(({data}) => {
+                if(data) data.forEach(m => addMsg(m));
+            });
+        }
+
+        async function sendMsg() {
+            const content = document.getElementById('chat-input').value;
+            if(!content) return;
+            const user = myProfile.email.split('@')[0];
+            await supabaseClient.from('messages').insert([{ username: user, content: content }]);
+            document.getElementById('chat-input').value = "";
+        }
+
+        function addMsg(m) {
+            const box = document.getElementById('chat-box');
+            box.innerHTML += `<div class="msg"><b>${m.username}:</b> ${m.content}</div>`;
+            box.scrollTop = box.scrollHeight;
+        }
+
+        async function promoteUser() {
+            const id = document.getElementById('target-id').value;
+            const rank = document.getElementById('target-rank').value;
+            const { error } = await supabaseClient.from('profiles').update({ rank: rank }).eq('id', id);
+            if(error) alert(error.message); else alert("Target Promoted.");
+        }
+
+        function switchTab(id, el) {
+            document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+            document.getElementById(id).classList.add('active');
+            el.classList.add('active');
         }
     </script>
 </body>
