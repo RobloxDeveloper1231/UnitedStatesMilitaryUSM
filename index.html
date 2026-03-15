@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Roblox Dashboard</title>
+    <style>
+        :root { --bg: #0b0e14; --side: #151921; --accent: #3a86ff; --text: #ffffff; }
+        .light-mode { --bg: #f0f2f5; --side: #ffffff; --accent: #3a86ff; --text: #1c1e21; }
+
+        body { margin: 0; font-family: 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); transition: 0.3s; }
+        .container { display: flex; height: 100vh; }
+
+        /* Animated Sidebar */
+        .sidebar { 
+            width: 250px; background: var(--side); padding: 20px; 
+            border-right: 1px solid rgba(255,255,255,0.1);
+            animation: slideIn 0.6s ease;
+        }
+        @keyframes slideIn { from { transform: translateX(-100%); } to { transform: translateX(0); } }
+
+        .nav-item { 
+            padding: 12px 15px; margin: 8px 0; border-radius: 8px; cursor: pointer; 
+            transition: 0.2s; font-weight: 500; display: flex; align-items: center;
+        }
+        .nav-item:hover { background: var(--accent); transform: translateX(5px); color: white; }
+        .hidden { display: none; }
+
+        .main { flex: 1; padding: 40px; overflow-y: auto; }
+        .card { background: var(--side); padding: 20px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.2); }
+        
+        button { padding: 10px 20px; border: none; border-radius: 6px; cursor: pointer; background: var(--accent); color: white; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div class="sidebar">
+        <h3>Admin Panel</h3>
+        <div class="nav-item">💬 Chat</div>
+        <div class="nav-item" id="mod-tab" class="hidden">🛡️ Moderation</div>
+        <div class="nav-item" id="game-mod-tab" class="hidden">🎮 Game Mod</div>
+        <div class="nav-item" id="config-tab" class="hidden">🛠️ Configure</div>
+        <div class="nav-item" onclick="toggleTheme()">🌓 Settings</div>
+    </div>
+
+    <div class="main">
+        <div class="card">
+            <h1>Welcome, <span id="user-display">Guest</span></h1>
+            <p>Rank: <b id="rank-display">Loading...</b></p>
+            <div id="status-box">Please log in to manage the game.</div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // THE RANK SYSTEM (Logic)
+    const Ranks = {
+        PLAYER: 1,
+        MODERATOR: 2,
+        DEVELOPER: 3,
+        CO_OWNER: 4,
+        FOUNDER: 5
+    };
+
+    let userRank = "Developer"; // This will eventually come from your database
+
+    function applyPermissions(rank) {
+        document.getElementById('rank-display').innerText = rank;
+        document.getElementById('user-display').innerText = "AdminUser";
+        
+        const rankLevel = Ranks[rank.toUpperCase()] || 0;
+
+        if (rankLevel >= Ranks.MODERATOR) {
+            document.getElementById('mod-tab').classList.remove('hidden');
+            document.getElementById('game-mod-tab').classList.remove('hidden');
+        }
+        if (rankLevel >= Ranks.DEVELOPER) {
+            document.getElementById('config-tab').classList.remove('hidden');
+        }
+    }
+
+    function toggleTheme() { document.body.classList.toggle('light-mode'); }
+
+    // Start with permissions applied
+    applyPermissions(userRank);
+</script>
+</body>
+</html>
