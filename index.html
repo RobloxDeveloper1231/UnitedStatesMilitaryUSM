@@ -9,7 +9,7 @@
         :root { --primary: #3a86ff; --bg: #0b0c10; --card: #1f2833; --text: #ffffff; --border: rgba(255,255,255,0.1); }
         body { margin: 0; font-family: 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); overflow: hidden; }
         
-        /* Smooth Animations */
+        /* Animations */
         @keyframes welcomeScale { 
             0% { opacity: 0; transform: scale(0.7) translateY(30px); filter: blur(10px); } 
             100% { opacity: 1; transform: scale(1) translateY(0); filter: blur(0); } 
@@ -23,7 +23,6 @@
         button { background: var(--primary); color: white; border: none; padding: 12px; border-radius: 8px; cursor: pointer; width: 100%; font-weight: bold; transition: 0.3s; margin-top: 10px; }
         button:hover { filter: brightness(1.2); transform: translateY(-2px); box-shadow: 0 5px 15px rgba(58, 134, 255, 0.4); }
 
-        /* Dashboard Layout */
         #main-dash { display: none; height: 100vh; }
         .sidebar { width: 260px; background: #151921; padding: 20px; border-right: 1px solid var(--border); display: flex; flex-direction: column; }
         .nav-item { padding: 15px; margin: 5px 0; border-radius: 10px; cursor: pointer; transition: 0.3s; display: flex; align-items: center; gap: 10px; opacity: 0.7; }
@@ -33,7 +32,6 @@
         .tab-content { display: none; animation: fadeIn 0.5s ease; }
         .tab-content.active { display: block; }
 
-        /* Chat UI */
         #chat-box { height: 320px; background: rgba(0,0,0,0.4); border-radius: 12px; padding: 20px; overflow-y: auto; border: 1px solid var(--border); margin-bottom: 15px; }
         .msg { background: rgba(255,255,255,0.03); padding: 10px; border-radius: 8px; margin-bottom: 8px; border-left: 3px solid var(--primary); animation: fadeIn 0.3s ease; }
         
@@ -45,7 +43,7 @@
 
     <div id="auth-screen" class="overlay">
         <div class="auth-card">
-            <h2 id="auth-title">USM Military Login</h2>
+            <h2>USM Military Login</h2>
             <input type="email" id="email" placeholder="Email Address">
             <input type="password" id="password" placeholder="Password">
             <button onclick="handleAuth()" id="auth-btn">Authorize Access</button>
@@ -55,29 +53,29 @@
 
     <div id="gatekeeper" class="overlay" style="display: none; flex-direction: column;">
         <div class="welcome-text">
-            <h1 style="font-size: 55px; margin-bottom: 0; letter-spacing: -1px;">Welcome, <span id="gk-user" style="color:var(--primary)"></span></h1>
-            <h2 id="gk-rank" style="opacity: 0.5; font-weight: 400; margin-top: 5px; text-transform: uppercase; letter-spacing: 2px;">Rank: Player</h2>
-            <button onclick="enterDash()" style="width: 250px; margin-top: 40px; height: 50px; font-size: 16px;">ENTER COMMAND</button>
+            <h1 style="font-size: 55px; margin-bottom: 0;">Welcome, <span id="gk-user" style="color:var(--primary)"></span></h1>
+            <h2 id="gk-rank" style="opacity: 0.5; font-weight: 400; text-transform: uppercase; letter-spacing: 2px;">Rank: Player</h2>
+            <button onclick="enterDash()" style="width: 250px; margin-top: 40px; height: 50px;">ENTER COMMAND</button>
         </div>
     </div>
 
     <div id="main-dash">
         <div class="sidebar">
-            <h2 style="color: var(--primary); font-size: 18px; margin-bottom: 30px;">UNITED STATES MILITARY</h2>
+            <h2 style="color: var(--primary); font-size: 18px; margin-bottom: 30px;">USM COMMAND</h2>
             <div class="nav-item active" onclick="switchTab('home', this)">🏠 Headquarters</div>
             <div class="nav-item" onclick="switchTab('chat', this)">💬 Global Comms</div>
             <div class="nav-item" onclick="switchTab('rules', this)">📜 Protocols</div>
             <div id="nav-ann" class="nav-item hidden" onclick="switchTab('ann-tab', this)">📢 News Update</div>
             <div id="nav-conf" class="nav-item hidden" onclick="switchTab('conf-tab', this)">🛠️ Personnel</div>
-            <button onclick="location.reload()" style="margin-top:auto; background:#cc3333; height: 45px;">Terminated Session</button>
+            <button onclick="location.reload()" style="margin-top:auto; background:#cc3333;">Logout</button>
         </div>
 
         <div class="content-area">
             <div id="home" class="tab-content active">
                 <h1>Command Center</h1>
-                <div style="background:var(--card); padding:25px; border-radius:15px; border: 1px solid var(--border); box-shadow: 0 4px 20px rgba(0,0,0,0.3);">
+                <div style="background:var(--card); padding:25px; border-radius:15px; border: 1px solid var(--border);">
                     <h3 style="margin-top:0; color:var(--primary)">📢 Latest Briefing</h3>
-                    <p id="ann-display" style="line-height: 1.6;">Awaiting new intelligence reports...</p>
+                    <p id="ann-display">Awaiting reports...</p>
                 </div>
             </div>
 
@@ -86,13 +84,13 @@
                 <div id="chat-box"></div>
                 <div style="display:flex; gap:12px;">
                     <input type="text" id="chat-input" placeholder="Transmit message...">
-                    <button onclick="sendMsg()" style="width:110px; margin-top:8px;">Send</button>
+                    <button onclick="sendMsg()" style="width:110px;">Send</button>
                 </div>
             </div>
 
             <div id="rules" class="tab-content">
                 <h1>Rules of Engagement</h1>
-                <div id="rules-display" style="background:var(--card); padding:25px; border-radius:15px; white-space: pre-wrap; line-height: 1.8;">Loading protocols...</div>
+                <div id="rules-display" style="background:var(--card); padding:25px; border-radius:15px; white-space: pre-wrap;">Loading protocols...</div>
                 <div id="rules-admin" class="hidden" style="margin-top:20px;">
                     <textarea id="rules-input" rows="5" placeholder="Update protocols..."></textarea>
                     <button onclick="updateSettings('rules', 'rules-input', 'rules-display')">Sync Protocols</button>
@@ -101,29 +99,27 @@
 
             <div id="ann-tab" class="tab-content">
                 <h1>Intelligence Broadcast</h1>
-                <textarea id="ann-input" style="height: 100px;" placeholder="Enter news for all units..."></textarea>
-                <button onclick="updateSettings('announcement', 'ann-input', 'ann-display')">Broadcast News</button>
+                <textarea id="ann-input" style="height: 100px;" placeholder="Broadcast to all units..."></textarea>
+                <button onclick="updateSettings('announcement', 'ann-input', 'ann-display')">Broadcast</button>
             </div>
 
             <div id="conf-tab" class="tab-content">
                 <h1>Personnel Promotion</h1>
-                <p style="opacity:0.7">Paste the User UUID from Supabase Auth to modify rank.</p>
-                <input type="text" id="target-id" placeholder="User UUID">
+                <input type="text" id="target-id" placeholder="User ID">
                 <select id="target-rank">
                     <option value="Player">Player</option>
                     <option value="Moderator">Moderator</option>
                     <option value="Developer">Developer</option>
                     <option value="Founder">Founder</option>
                 </select>
-                <button onclick="promoteUser()">Execute Promotion</button>
+                <button onclick="promoteUser()">Update Rank</button>
             </div>
         </div>
     </div>
 
     <script>
-        // PASTE YOUR SUPABASE INFO HERE
-        const _url = 'YOUR_SUPABASE_URL';
-        const _key = 'YOUR_SUPABASE_KEY';
+        const _url = 'https://bjhblljhqxgurmovmael.supabase.co';
+        const _key = 'PASTE_YOUR_ANON_KEY_HERE';
         const supabaseClient = supabase.createClient(_url, _key);
 
         let isSignUp = false;
@@ -138,13 +134,11 @@
         async function handleAuth() {
             const email = document.getElementById('email').value;
             const password = document.getElementById('password').value;
-            if(!email || !password) return alert("Credentials required.");
-
             if (isSignUp) {
                 const { data, error } = await supabaseClient.auth.signUp({ email, password });
                 if (error) return alert(error.message);
                 await supabaseClient.from('profiles').insert([{ id: data.user.id, email: email, rank: 'Player' }]);
-                alert("Recruit File Created. Please log in.");
+                alert("File Created. Please log in.");
                 location.reload();
             } else {
                 const { data, error } = await supabaseClient.auth.signInWithPassword({ email, password });
@@ -165,9 +159,7 @@
         function enterDash() {
             document.getElementById('gatekeeper').style.display = 'none';
             document.getElementById('main-dash').style.display = 'flex';
-            
-            const r = myProfile.rank;
-            if (r === "Founder" || r === "Developer") {
+            if (myProfile.rank === "Founder" || myProfile.rank === "Developer") {
                 document.getElementById('nav-conf').classList.remove('hidden');
                 document.getElementById('nav-ann').classList.remove('hidden');
                 document.getElementById('rules-admin').classList.remove('hidden');
@@ -204,8 +196,7 @@
         async function sendMsg() {
             const content = document.getElementById('chat-input').value;
             if(!content) return;
-            const user = myProfile.email.split('@')[0];
-            await supabaseClient.from('messages').insert([{ username: user, content: content }]);
+            await supabaseClient.from('messages').insert([{ username: myProfile.email.split('@')[0], content: content }]);
             document.getElementById('chat-input').value = "";
         }
 
@@ -218,8 +209,8 @@
         async function promoteUser() {
             const id = document.getElementById('target-id').value;
             const rank = document.getElementById('target-rank').value;
-            const { error } = await supabaseClient.from('profiles').update({ rank: rank }).eq('id', id);
-            if(error) alert(error.message); else alert("Target Promoted.");
+            await supabaseClient.from('profiles').update({ rank: rank }).eq('id', id);
+            alert("Personnel Updated.");
         }
 
         function switchTab(id, el) {
