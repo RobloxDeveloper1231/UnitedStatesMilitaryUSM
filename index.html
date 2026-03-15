@@ -9,7 +9,6 @@
         :root { --primary: #3a86ff; --bg: #0b0c10; --card: #1f2833; --text: #ffffff; --border: rgba(255,255,255,0.1); --online: #2ecc71; }
         body { margin: 0; font-family: 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); overflow: hidden; }
         
-        /* Smooth Animations */
         @keyframes welcomeScale { 
             0% { opacity: 0; transform: scale(0.7) translateY(30px); filter: blur(10px); } 
             100% { opacity: 1; transform: scale(1) translateY(0); filter: blur(0); } 
@@ -34,7 +33,7 @@
 
         #chat-box { height: 320px; background: rgba(0,0,0,0.4); border-radius: 12px; padding: 20px; overflow-y: auto; border: 1px solid var(--border); margin-bottom: 15px; }
         .msg { background: rgba(255,255,255,0.03); padding: 10px; border-radius: 8px; margin-bottom: 8px; border-left: 3px solid var(--primary); }
-        .status-dot { height: 8px; width: 8px; background-color: var(--online); border-radius: 50%; display: inline-block; margin-right: 8px; box-shadow: 0 0 5px var(--online); }
+        .status-dot { height: 8px; width: 8px; background-color: var(--online); border-radius: 50%; display: inline-block; margin-right: 8px; }
         
         .hidden { display: none !important; }
         .welcome-text { animation: welcomeScale 0.8s cubic-bezier(0.34, 1.56, 0.64, 1); text-align: center; }
@@ -45,9 +44,17 @@
     <div id="auth-screen" class="overlay">
         <div class="auth-card">
             <h2 id="auth-title">USM TERMINAL</h2>
-            <input type="text" id="username" placeholder="Username">
-            <input type="password" id="password" placeholder="Password">
-            <button onclick="handleAuth()" id="auth-btn">AUTHORIZE</button>
+            <div id="login-fields">
+                <input type="email" id="login-email" placeholder="Email Address">
+                <input type="password" id="login-pass" placeholder="Password">
+                <button onclick="handleLogin()">AUTHORIZE</button>
+            </div>
+            <div id="signup-fields" class="hidden">
+                <input type="text" id="reg-user" placeholder="Desired Username">
+                <input type="email" id="reg-email" placeholder="Real Email Address">
+                <input type="password" id="reg-pass" placeholder="Password">
+                <button onclick="handleSignUp()">CREATE RECRUIT FILE</button>
+            </div>
             <p id="toggle-text" style="font-size: 12px; cursor: pointer; margin-top:20px; color: var(--primary);" onclick="toggleAuth()">New Recruit? Sign Up</p>
         </div>
     </div>
@@ -129,30 +136,37 @@
         function toggleAuth() {
             isSignUp = !isSignUp;
             document.getElementById('auth-title').innerText = isSignUp ? "SIGN UP" : "LOGIN";
-            document.getElementById('auth-btn').innerText = isSignUp ? "CREATE FILE" : "AUTHORIZE";
+            document.getElementById('login-fields').classList.toggle('hidden');
+            document.getElementById('signup-fields').classList.toggle('hidden');
             document.getElementById('toggle-text').innerText = isSignUp ? "Already registered? Login" : "New Recruit? Sign Up";
         }
 
-        async function handleAuth() {
-            const user = document.getElementById('username').value;
-            const pass = document.getElementById('password').value;
-            const email = `${user}@usm.com`; 
+        async function handleSignUp() {
+            const user = document.getElementById('reg-user').value;
+            const email = document.getElementById('reg-email').value;
+            const pass = document.getElementById('reg-pass').value;
 
-            if (isSignUp) {
-                const { data, error } = await supabaseClient.auth.signUp({ email, password: pass });
-                if (error) return alert(error.message);
-                await supabaseClient.from('profiles').insert([{ id: data.user.id, username: user, rank: 'Player' }]);
-                alert("Sign Up Success! You can now Login.");
-                toggleAuth();
-            } else {
-                const { data, error } = await supabaseClient.auth.signInWithPassword({ email, password: pass });
-                if (error) return alert(error.message);
-                fetchProfile(data.user);
-            }
+            const { data, error } = await supabaseClient.auth.signUp({ email, password: pass });
+            if (error) return alert(error.message);
+            
+            // Link username to profile
+            await supabaseClient.from('profiles').insert([{ id: data.user.id, username: user, rank: 'Player' }]);
+            alert("Recruit file created! Check your email (and Spam folder) to confirm your account.");
+            location.reload();
+        }
+
+        async function handleLogin() {
+            const email = document.getElementById('login-email').value;
+            const pass = document.getElementById('login-pass').value;
+
+            const { data, error } = await supabaseClient.auth.signInWithPassword({ email, password: pass });
+            if (error) return alert(error.message);
+            fetchProfile(data.user);
         }
 
         async function fetchProfile(user) {
-            const { data } = await supabaseClient.from('profiles').select('*').eq('id', user.id).single();
+            const { data, error } = await supabaseClient.from('profiles').select('*').eq('id', user.id).single();
+            if (error) return alert("Profile not found. Did you confirm your email?");
             myProfile = data;
             document.getElementById('auth-screen').style.display = 'none';
             document.getElementById('gatekeeper').style.display = 'flex';
